@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -26,17 +27,20 @@ export default function AddEditSkuScreen({ route, navigation }: Props) {
   const [description, setDescription] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [carryStock, setCarryStock] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     navigation.setOptions({ title: isEdit ? 'Edit Diorama' : 'Add Diorama' });
     if (isEdit) {
-      const d = getDiorama(editSku);
-      if (d) {
-        setSku(d.sku);
-        setDescription(d.description);
-        setPhotoUri(d.photo_uri);
-        setCarryStock(!!d.carry_stock);
-      }
+      (async () => {
+        const d = await getDiorama(editSku);
+        if (d) {
+          setSku(d.sku);
+          setDescription(d.description);
+          setPhotoUri(d.photo_url);
+          setCarryStock(!!d.carry_stock);
+        }
+      })();
     }
   }, []);
 
@@ -49,7 +53,7 @@ export default function AddEditSkuScreen({ route, navigation }: Props) {
           if (status !== 'granted') { Alert.alert('Camera permission required'); return; }
           const result = await ImagePicker.launchCameraAsync({
             allowsEditing: true,
-            aspect: [4, 3],
+            aspect: [1, 1],
             quality: 0.6,
           });
           if (!result.canceled) setPhotoUri(result.assets[0].uri);
@@ -63,7 +67,7 @@ export default function AddEditSkuScreen({ route, navigation }: Props) {
           const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
             allowsEditing: true,
-            aspect: [4, 3],
+            aspect: [1, 1],
             quality: 0.6,
           });
           if (!result.canceled) setPhotoUri(result.assets[0].uri);
@@ -83,18 +87,25 @@ export default function AddEditSkuScreen({ route, navigation }: Props) {
     ]);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const trimmedSku = sku.trim().toUpperCase();
     if (!trimmedSku) { Alert.alert('SKU is required'); return; }
 
-    if (isEdit) {
-      updateDiorama(trimmedSku, description.trim(), photoUri, carryStock);
-      navigation.goBack();
-    } else {
-      const existing = getDiorama(trimmedSku);
-      if (existing) { Alert.alert('SKU already exists', `${trimmedSku} is already in use.`); return; }
-      createDiorama(trimmedSku, description.trim(), photoUri, carryStock);
-      navigation.replace('SkuDetail', { sku: trimmedSku });
+    setSaving(true);
+    try {
+      if (isEdit) {
+        await updateDiorama(trimmedSku, description.trim(), photoUri, carryStock);
+        navigation.goBack();
+      } else {
+        const existing = await getDiorama(trimmedSku);
+        if (existing) { Alert.alert('SKU already exists', `${trimmedSku} is already in use.`); return; }
+        await createDiorama(trimmedSku, description.trim(), photoUri, carryStock);
+        navigation.replace('SkuDetail', { sku: trimmedSku });
+      }
+    } catch (e: any) {
+      Alert.alert('Error', e.message ?? 'Failed to save diorama.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -151,8 +162,12 @@ export default function AddEditSkuScreen({ route, navigation }: Props) {
           )}
         </View>
 
-        <Pressable style={styles.saveBtn} onPress={handleSave}>
-          <Text style={styles.saveBtnText}>{isEdit ? 'Save Changes' : 'Create Diorama'}</Text>
+        <Pressable style={[styles.saveBtn, saving && styles.saveBtnDisabled]} onPress={handleSave} disabled={saving}>
+          {saving ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.saveBtnText}>{isEdit ? 'Save Changes' : 'Create Diorama'}</Text>
+          )}
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -197,7 +212,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   photoPlaceholderText: { color: '#3367d6', fontSize: 16, fontWeight: '600' },
-  preview: { width: '100%', height: 200, borderRadius: 8, marginBottom: 10 },
+  preview: { width: '100%', height: 300, borderRadius: 8, marginBottom: 10 },
   photoBtn: {
     padding: 10,
     borderWidth: 1,
@@ -217,6 +232,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 2,
   },
+  saveBtnDisabled: { backgroundColor: '#aaa' },
   saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   checkboxRow: {
     flexDirection: 'row',

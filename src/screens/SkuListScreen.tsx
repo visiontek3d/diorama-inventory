@@ -1,6 +1,8 @@
-import React, { useCallback, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -9,6 +11,8 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../lib/supabase';
 import { getAllDioramas, getSetting, searchDioramas } from '../db/database';
 import { DEFAULT_CARRY_STOCK_COLOR } from './ConfigScreen';
 import { Diorama, RootStackParamList } from '../types';
@@ -29,30 +33,60 @@ export default function SkuListScreen({ navigation }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('all');
   const [desiredStock, setDesiredStock] = useState('');
   const [carryStockColor, setCarryStockColor] = useState(DEFAULT_CARRY_STOCK_COLOR);
+  const [loadingData, setLoadingData] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.email) setUserEmail(user.email);
+    });
+  }, []);
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerTitle: () => (
+        <View style={{ alignItems: 'center' }}>
+          <Text style={{ fontSize: 17, fontWeight: '700', color: '#1a1a1a' }}>Diorama Inventory</Text>
+          {userEmail ? <Text style={{ fontSize: 11, color: '#888', marginTop: 1 }}>{userEmail}</Text> : null}
+        </View>
+      ),
       headerRight: () => (
-        <Pressable onPress={() => navigation.navigate('Config')} style={{ marginRight: 4 }}>
-          <Text style={styles.settingsBtn}>Settings</Text>
+        <Pressable onPress={() => navigation.navigate('Config')} style={{ marginRight: 4, padding: 4 }}>
+          <Ionicons name="settings-outline" size={22} color="#3367d6" />
         </Pressable>
       ),
     });
-  }, [navigation]);
+  }, [navigation, userEmail]);
 
   const load = useCallback(() => {
-    const stock = getSetting('desired_stock');
-    setDesiredStock(stock ?? '');
-    const color = getSetting('carry_stock_color');
-    setCarryStockColor(color ?? DEFAULT_CARRY_STOCK_COLOR);
-    setDioramas(query.trim() ? searchDioramas(query) : getAllDioramas());
+    let mounted = true;
+    setLoadingData(true);
+    (async () => {
+      try {
+        const [stock, color, data] = await Promise.all([
+          getSetting('desired_stock'),
+          getSetting('carry_stock_color'),
+          query.trim() ? searchDioramas(query) : getAllDioramas(),
+        ]);
+        if (!mounted) return;
+        setDesiredStock(stock ?? '');
+        setCarryStockColor(color ?? DEFAULT_CARRY_STOCK_COLOR);
+        setDioramas(data);
+      } finally {
+        if (mounted) setLoadingData(false);
+      }
+    })();
+    return () => { mounted = false; };
   }, [query]);
 
   useFocusEffect(load);
 
   const handleSearch = (text: string) => {
     setQuery(text);
-    setDioramas(text.trim() ? searchDioramas(text) : getAllDioramas());
+    (async () => {
+      const data = text.trim() ? await searchDioramas(text) : await getAllDioramas();
+      setDioramas(data);
+    })();
   };
 
   const target = parseInt(desiredStock, 10) || 0;
@@ -60,7 +94,7 @@ export default function SkuListScreen({ navigation }: Props) {
 
   const filtered = dioramas.filter((d) => {
     if (activeTab === 'in_stock') return d.walls_qty > 0 || d.open_door_qty > 0 || d.lift_qty > 0;
-    if (activeTab === 'one_off') return d.one_off_qty > 0;
+    if (activeTab === 'one_off') return (d.one_off_lift_qty ?? 0) > 0 || (d.one_off_od_qty ?? 0) > 0;
     if (activeTab === 'restock') {
       if (!d.carry_stock || target === 0) return false;
       return d.walls_qty < target || d.open_door_qty < halfTarget || d.lift_qty < halfTarget;
@@ -99,7 +133,11 @@ export default function SkuListScreen({ navigation }: Props) {
         onChangeText={handleSearch}
       />
 
-      {filtered.length === 0 ? (
+      {loadingData ? (
+        <View style={styles.emptyContainer}>
+          <ActivityIndicator size="large" color="#3367d6" />
+        </View>
+      ) : filtered.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.empty}>{emptyMessage()}</Text>
         </View>
@@ -118,9 +156,14 @@ export default function SkuListScreen({ navigation }: Props) {
 
             return (
               <Pressable
-                style={[styles.row, carryStock && { backgroundColor: carryStockColor }]}
+                style={[styles.row, carryStock && activeTab !== 'one_off' && { borderWidth: 2, borderColor: carryStockColor }]}
                 onPress={() => navigation.navigate('SkuDetail', { sku: item.sku })}
               >
+                {item.photo_url ? (
+                  <Image source={{ uri: item.photo_url }} style={styles.thumbnail} />
+                ) : (
+                  <View style={styles.thumbnailPlaceholder} />
+                )}
                 <View style={styles.rowText}>
                   <Text style={styles.sku}>{item.sku}</Text>
                   {item.description ? (
@@ -134,7 +177,8 @@ export default function SkuListScreen({ navigation }: Props) {
                 </View>
                 {activeTab === 'one_off' ? (
                   <View style={styles.badges}>
-                    <Badge label="OO" value={item.one_off_qty} />
+                    <Badge label="LV" value={item.one_off_lift_qty ?? 0} />
+                    <Badge label="OD" value={item.one_off_od_qty ?? 0} />
                   </View>
                 ) : isRestock ? (
                   <View style={styles.badges}>
@@ -167,25 +211,47 @@ export default function SkuListScreen({ navigation }: Props) {
         />
       )}
 
+      {activeTab === 'in_stock' && filtered.length > 0 && (() => {
+        const totalW = filtered.reduce((sum, d) => sum + d.walls_qty, 0);
+        const totalD = filtered.reduce((sum, d) => sum + d.open_door_qty, 0);
+        const totalL = filtered.reduce((sum, d) => sum + d.lift_qty, 0);
+        return (
+          <View style={[styles.totalsBar, { justifyContent: 'flex-end' }]}>
+            <View style={styles.badges}>
+              <Badge label="W" value={totalW} />
+              <Badge label="D" value={totalD} />
+              <Badge label="L" value={totalL} />
+            </View>
+          </View>
+        );
+      })()}
+
+      {activeTab === 'one_off' && filtered.length > 0 && (() => {
+        const totalLV = filtered.reduce((sum, d) => sum + (d.one_off_lift_qty ?? 0), 0);
+        const totalOD = filtered.reduce((sum, d) => sum + (d.one_off_od_qty ?? 0), 0);
+        return (
+          <View style={[styles.totalsBar, { justifyContent: 'flex-end' }]}>
+            <Badge label="TOTAL" value={totalLV + totalOD} />
+          </View>
+        );
+      })()}
+
       <View style={styles.fab_row}>
-        <Pressable
-          style={[styles.fab, styles.fabSecondary]}
-          onPress={() => navigation.navigate('BulkImport')}
-        >
-          <Text style={styles.fabText}>Import</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.fab, styles.fabSecondary]}
-          onPress={() => navigation.navigate('Scan')}
-        >
-          <Text style={styles.fabText}>Scan</Text>
-        </Pressable>
-        <Pressable
-          style={styles.fab}
-          onPress={() => navigation.navigate('AddEditSku', {})}
-        >
-          <Text style={styles.fabText}>+ Add</Text>
-        </Pressable>
+        {activeTab === 'one_off' ? (
+          <Pressable
+            style={[styles.fab, styles.fabOneOff]}
+            onPress={() => navigation.navigate('OneOffScan')}
+          >
+            <Text style={styles.fabText}>Scan One Off</Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            style={styles.fab}
+            onPress={() => navigation.navigate('Scan')}
+          >
+            <Text style={styles.fabText}>Scan</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -250,8 +316,21 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     marginBottom: 8,
     borderRadius: 8,
-    padding: 14,
+    padding: 10,
     elevation: 1,
+    gap: 10,
+  },
+  thumbnail: {
+    width: 52,
+    height: 52,
+    borderRadius: 6,
+    backgroundColor: '#e0e0e0',
+  },
+  thumbnailPlaceholder: {
+    width: 52,
+    height: 52,
+    borderRadius: 6,
+    backgroundColor: '#e8e8e8',
   },
   rowText: { flex: 1 },
   sku: { fontSize: 16, fontWeight: '700', color: '#1a1a1a' },
@@ -274,8 +353,22 @@ const styles = StyleSheet.create({
   badgeRestock: { backgroundColor: '#fef3c7' },
   badgeLabelRestock: { color: '#b45309' },
   badgeValueRestock: { color: '#92400e' },
+  totalsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    marginHorizontal: 12,
+    marginBottom: 8,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    elevation: 1,
+    borderTopWidth: 2,
+    borderTopColor: '#6d28d9',
+  },
+  totalsLabel: { fontSize: 13, fontWeight: '700', color: '#6d28d9' },
   empty: { textAlign: 'center', color: '#888', fontSize: 15 },
-  emptyContainer: { paddingTop: 80, alignItems: 'center', paddingHorizontal: 24 },
+  emptyContainer: { flex: 1, paddingTop: 80, alignItems: 'center', paddingHorizontal: 24 },
   fab_row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -293,5 +386,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   fabSecondary: { backgroundColor: '#555' },
+  fabOneOff: { backgroundColor: '#6d28d9' },
   fabText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 });

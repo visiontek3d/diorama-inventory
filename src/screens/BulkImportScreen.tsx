@@ -26,6 +26,7 @@ type PreviewRow = {
 export default function BulkImportScreen({ navigation }: Props) {
   const [preview, setPreview] = useState<PreviewRow[]>([]);
   const [fileName, setFileName] = useState('');
+  const [importing, setImporting] = useState(false);
 
   const handlePick = async () => {
     try {
@@ -64,7 +65,7 @@ export default function BulkImportScreen({ navigation }: Props) {
     }
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
     const validRows = preview.filter((r) => !r.error);
     if (validRows.length === 0) {
       Alert.alert('No valid rows to import');
@@ -78,13 +79,20 @@ export default function BulkImportScreen({ navigation }: Props) {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Import',
-          onPress: () => {
-            const result = bulkImportDioramas(validRows);
-            Alert.alert(
-              'Import Complete',
-              `Added: ${result.inserted}\nSkipped (already exist): ${result.skipped}${result.errors.length ? `\nErrors: ${result.errors.join(', ')}` : ''}`,
-              [{ text: 'OK', onPress: () => navigation.goBack() }]
-            );
+          onPress: async () => {
+            setImporting(true);
+            try {
+              const result = await bulkImportDioramas(validRows);
+              Alert.alert(
+                'Import Complete',
+                `Added: ${result.inserted}\nSkipped (already exist): ${result.skipped}${result.errors.length ? `\nErrors: ${result.errors.join(', ')}` : ''}`,
+                [{ text: 'OK', onPress: () => navigation.goBack() }]
+              );
+            } catch (e: any) {
+              Alert.alert('Import Failed', e.message ?? 'Unknown error');
+            } finally {
+              setImporting(false);
+            }
           },
         },
       ]
@@ -141,12 +149,12 @@ export default function BulkImportScreen({ navigation }: Props) {
           ))}
 
           <Pressable
-            style={[styles.importBtn, validCount === 0 && styles.importBtnDisabled]}
+            style={[styles.importBtn, (validCount === 0 || importing) && styles.importBtnDisabled]}
             onPress={handleImport}
-            disabled={validCount === 0}
+            disabled={validCount === 0 || importing}
           >
             <Text style={styles.importBtnText}>
-              Import {validCount} Diorama{validCount !== 1 ? 's' : ''}
+              {importing ? 'Importing…' : `Import ${validCount} Diorama${validCount !== 1 ? 's' : ''}`}
             </Text>
           </Pressable>
         </>

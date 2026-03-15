@@ -15,7 +15,7 @@ import { Component, COMPONENT_LABELS, Diorama, RootStackParamList, Transaction }
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SkuDetail'>;
 
-const COMPONENTS: Component[] = ['walls', 'open_door', 'lift', 'one_off'];
+const COMPONENTS: Component[] = ['walls', 'open_door', 'lift'];
 
 export default function SkuDetailScreen({ route, navigation }: Props) {
   const { sku } = route.params;
@@ -23,10 +23,16 @@ export default function SkuDetailScreen({ route, navigation }: Props) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   const load = useCallback(() => {
-    const d = getDiorama(sku);
-    if (!d) { navigation.goBack(); return; }
-    setDiorama(d);
-    setTransactions(getTransactions(sku));
+    let mounted = true;
+    (async () => {
+      const d = await getDiorama(sku);
+      if (!mounted) return;
+      if (!d) { navigation.goBack(); return; }
+      setDiorama(d);
+      const txs = await getTransactions(sku);
+      if (mounted) setTransactions(txs);
+    })();
+    return () => { mounted = false; };
   }, [sku]);
 
   useFocusEffect(load);
@@ -48,13 +54,16 @@ export default function SkuDetailScreen({ route, navigation }: Props) {
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: () => { deleteDiorama(sku); navigation.goBack(); },
+        onPress: async () => {
+          await deleteDiorama(sku);
+          navigation.goBack();
+        },
       },
     ]);
   };
 
-  const handleAdjust = (component: Component, direction: 1 | -1) => {
-    adjustInventory(sku, component, direction);
+  const handleAdjust = async (component: Component, direction: 1 | -1) => {
+    await adjustInventory(sku, component, direction);
     load();
   };
 
@@ -69,8 +78,8 @@ export default function SkuDetailScreen({ route, navigation }: Props) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      {diorama.photo_uri ? (
-        <Image source={{ uri: diorama.photo_uri }} style={styles.photo} resizeMode="cover" />
+      {diorama.photo_url ? (
+        <Image source={{ uri: diorama.photo_url }} style={styles.photo} resizeMode="cover" />
       ) : (
         <View style={styles.photoPlaceholder}>
           <Text style={styles.photoPlaceholderText}>No photo</Text>
@@ -118,9 +127,12 @@ export default function SkuDetailScreen({ route, navigation }: Props) {
           {transactions.slice(0, 10).map((t) => (
             <View key={t.id} style={styles.txRow}>
               <Text style={styles.txLabel}>{COMPONENT_LABELS[t.component]}</Text>
-              <Text style={[styles.txQty, t.qty > 0 ? styles.txIn : styles.txOut]}>
-                {t.qty > 0 ? `+${t.qty}` : t.qty}
+              <Text style={[styles.txQty, t.delta > 0 ? styles.txIn : styles.txOut]}>
+                {t.delta > 0 ? `+${t.delta}` : t.delta}
               </Text>
+              {t.user_email ? (
+                <Text style={styles.txUser}>{t.user_email.split('@')[0]}</Text>
+              ) : null}
               <Text style={styles.txDate}>{formatDate(t.created_at)}</Text>
             </View>
           ))}
@@ -141,7 +153,7 @@ function formatDate(iso: string) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
-  photo: { width: '100%', height: 220 },
+  photo: { width: '100%', height: 340 },
   photoPlaceholder: {
     width: '100%',
     height: 120,
@@ -188,9 +200,10 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0',
   },
   txLabel: { flex: 1, fontSize: 14, color: '#333' },
-  txQty: { fontSize: 14, fontWeight: '700', marginRight: 12 },
+  txQty: { fontSize: 14, fontWeight: '700', marginRight: 8 },
   txIn: { color: '#1a8a3a' },
   txOut: { color: '#c62828' },
+  txUser: { fontSize: 11, color: '#888', marginRight: 8 },
   txDate: { fontSize: 12, color: '#888' },
   deleteBtn: {
     margin: 12,
