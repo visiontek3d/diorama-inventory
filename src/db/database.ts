@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '../lib/supabase';
-import { Component, Diorama, Transaction } from '../types';
+import { Component, Diorama, Lift, LiftColor, Transaction } from '../types';
 
 // ─── Photo Upload ─────────────────────────────────────────────────────────────
 
@@ -172,6 +172,134 @@ export async function searchDioramas(query: string): Promise<Diorama[]> {
     .order('sku', { ascending: true });
   if (error) throw error;
   return (data ?? []) as Diorama[];
+}
+
+// ─── Lifts ────────────────────────────────────────────────────────────────────
+
+export async function getLifts(): Promise<Lift[]> {
+  const { data, error } = await supabase
+    .from('lifts')
+    .select('*')
+    .order('size').order('variation').order('color');
+  if (error) throw error;
+  return (data ?? []) as Lift[];
+}
+
+export async function adjustLiftInventory(liftId: number, delta: number): Promise<void> {
+  const { error } = await supabase.rpc('adjust_lift_inventory', {
+    p_lift_id: liftId,
+    p_delta: delta,
+  });
+  if (error) throw error;
+}
+
+export async function getLiftColors(): Promise<LiftColor[]> {
+  const { data, error } = await supabase
+    .from('lift_colors')
+    .select('*')
+    .order('sort_order')
+    .order('name');
+  if (error) throw error;
+  return (data ?? []) as LiftColor[];
+}
+
+async function uploadLiftColorPhoto(uri: string, name: string): Promise<string> {
+  const ext = uri.split('.').pop()?.toLowerCase().split('?')[0] ?? 'jpg';
+  const safeExt = ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? ext : 'jpg';
+  const mimeType = safeExt === 'jpg' ? 'image/jpeg' : `image/${safeExt}`;
+  const fileName = `lift_color_${name.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.${safeExt}`;
+  const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' as any });
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+  const { error } = await supabase.storage
+    .from('lift-photos')
+    .upload(fileName, bytes, { contentType: mimeType, upsert: true });
+  if (error) throw error;
+  return supabase.storage.from('lift-photos').getPublicUrl(fileName).data.publicUrl;
+}
+
+export async function createLiftColor(
+  name: string,
+  has_2high: boolean,
+  has_3high: boolean,
+  color_hex: string,
+  photo_uri: string | null
+): Promise<void> {
+  let photo_url: string | null = null;
+  if (photo_uri && !photo_uri.startsWith('https://')) {
+    photo_url = await uploadLiftColorPhoto(photo_uri, name);
+  } else if (photo_uri) {
+    photo_url = photo_uri;
+  }
+
+  const { error } = await supabase
+    .from('lift_colors')
+    .insert({ name, has_2high, has_3high, color_hex, photo_url });
+  if (error) throw error;
+
+  // Create corresponding lift rows
+  const rows: { size: string; variation: string; color: string }[] = [];
+  const sizes = [...(has_2high ? ['2high'] : []), ...(has_3high ? ['3high'] : [])];
+  for (const size of sizes) {
+    rows.push({ size, variation: 'primary', color: name });
+    rows.push({ size, variation: 'extender', color: name });
+  }
+  if (rows.length) {
+    await supabase.from('lifts').upsert(rows, { onConflict: 'size,variation,color', ignoreDuplicates: true });
+  }
+}
+
+export async function updateLiftColor(
+  id: number,
+  name: string,
+  oldName: string,
+  has_2high: boolean,
+  has_3high: boolean,
+  color_hex: string,
+  photo_uri: string | null,
+  clearPhoto = false
+): Promise<void> {
+  let photo_url: string | null = null;
+  if (photo_uri && !photo_uri.startsWith('https://')) {
+    photo_url = await uploadLiftColorPhoto(photo_uri, name);
+  } else if (photo_uri) {
+    photo_url = photo_uri;
+  }
+
+  const update: any = { name, has_2high, has_3high, color_hex };
+  if (photo_url !== null) update.photo_url = photo_url;
+  else if (clearPhoto) update.photo_url = null;
+
+  const { error } = await supabase.from('lift_colors').update(update).eq('id', id);
+  if (error) throw error;
+
+  // If name changed, rename color in lifts table
+  if (name !== oldName) {
+    await supabase.from('lifts').update({ color: name }).eq('color', oldName);
+  }
+
+  // Sync lift rows for size availability
+  for (const size of ['2high', '3high'] as const) {
+    const enabled = size === '2high' ? has_2high : has_3high;
+    if (enabled) {
+      await supabase.from('lifts').upsert(
+        [
+          { size, variation: 'primary', color: name },
+          { size, variation: 'extender', color: name },
+        ],
+        { onConflict: 'size,variation,color', ignoreDuplicates: true }
+      );
+    } else {
+      await supabase.from('lifts').delete().eq('size', size).eq('color', name);
+    }
+  }
+}
+
+export async function deleteLiftColor(id: number, name: string): Promise<void> {
+  await supabase.from('lifts').delete().eq('color', name);
+  const { error } = await supabase.from('lift_colors').delete().eq('id', id);
+  if (error) throw error;
 }
 
 export type BulkImportResult = { inserted: number; skipped: number; errors: string[] };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -15,6 +15,7 @@ import Constants from 'expo-constants';
 import { supabase } from '../lib/supabase';
 import { getAllDioramas, getSetting, setSetting, updateDioramaPhoto } from '../db/database';
 import { RootStackParamList } from '../types';
+import { useAppTheme } from '../lib/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Config'>;
 
@@ -32,6 +33,7 @@ const CARRY_STOCK_COLORS: { label: string; value: string }[] = [
 export const DEFAULT_CARRY_STOCK_COLOR = '#0086A3';
 
 export default function ConfigScreen({ navigation }: Props) {
+  const C = useAppTheme();
   const [desiredStock, setDesiredStock] = useState('');
   const [carryStockColor, setCarryStockColor] = useState(DEFAULT_CARRY_STOCK_COLOR);
   const [importing, setImporting] = useState(false);
@@ -130,6 +132,100 @@ export default function ConfigScreen({ navigation }: Props) {
     ]);
   };
 
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.background },
+    card: {
+      backgroundColor: C.card,
+      borderRadius: 10,
+      margin: 12,
+      marginBottom: 0,
+      padding: 16,
+      borderColor: C.cardBorder,
+      borderWidth: 1,
+    },
+    sectionTitle: { fontSize: 16, fontWeight: '700', color: C.accent, marginBottom: 12 },
+    label: { fontSize: 13, color: C.textSecondary, fontWeight: '600', marginBottom: 4 },
+    hint: { fontSize: 12, color: C.textSecondary, marginBottom: 10 },
+    input: {
+      borderWidth: 1,
+      borderColor: C.inputBorder,
+      borderRadius: 8,
+      padding: 10,
+      fontSize: 18,
+      fontWeight: '700',
+      color: C.inputText,
+      backgroundColor: C.input,
+      width: 120,
+    },
+    colorGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 10,
+      marginTop: 4,
+    },
+    colorSwatch: {
+      width: 72,
+      height: 64,
+      borderRadius: 8,
+      borderWidth: 2,
+      borderColor: C.cardBorder,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+    },
+    colorSwatchSelected: {
+      borderColor: C.accent,
+      borderWidth: 2.5,
+    },
+    colorSwatchCheck: { fontSize: 18, fontWeight: '700' },
+    colorSwatchLabel: { fontSize: 11, fontWeight: '600' },
+    actionBtn: {
+      backgroundColor: C.accent,
+      borderRadius: 10,
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    actionBtnSecondary: { backgroundColor: C.buttonSecondary },
+    actionBtnDisabled: { backgroundColor: '#aaa' },
+    actionBtnDanger: { backgroundColor: C.danger },
+    actionBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+    overlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: C.overlay,
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 999,
+    },
+    overlayCard: {
+      backgroundColor: C.card,
+      borderRadius: 16,
+      padding: 32,
+      alignItems: 'center',
+      width: 260,
+      gap: 12,
+      elevation: 8,
+    },
+    overlayTitle: { fontSize: 17, fontWeight: '700', color: C.text },
+    overlayProgress: { fontSize: 14, color: C.textSecondary },
+    progressBarBg: {
+      width: '100%',
+      height: 8,
+      backgroundColor: C.separator,
+      borderRadius: 4,
+      overflow: 'hidden',
+    },
+    progressBarFill: {
+      height: '100%',
+      backgroundColor: C.accent,
+      borderRadius: 4,
+    },
+    versionContainer: {
+      alignItems: 'center',
+      paddingVertical: 24,
+    },
+    versionText: { fontSize: 13, color: C.textSecondary },
+  }), [C]);
+
   return (
     <View style={{ flex: 1 }}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -145,7 +241,7 @@ export default function ConfigScreen({ navigation }: Props) {
             onChangeText={handleDesiredStockChange}
             keyboardType="numeric"
             placeholder="Enter a number"
-            placeholderTextColor="#7A7A7A"
+            placeholderTextColor={C.placeholder}
             selectTextOnFocus
           />
         </View>
@@ -172,7 +268,7 @@ export default function ConfigScreen({ navigation }: Props) {
             style={[styles.actionBtn, styles.actionBtnSecondary]}
             onPress={() => navigation.navigate('BulkImport')}
           >
-            <Text style={styles.actionBtnText}>Import from CSV</Text>
+            <Text style={[styles.actionBtnText, { color: C.buttonSecondaryText }]}>Import from CSV</Text>
           </Pressable>
         </View>
 
@@ -221,7 +317,7 @@ export default function ConfigScreen({ navigation }: Props) {
       {importing && (
         <View style={styles.overlay}>
           <View style={styles.overlayCard}>
-            <ActivityIndicator size="large" color="#0086A3" />
+            <ActivityIndicator size="large" color={C.accent} />
             <Text style={styles.overlayTitle}>Importing Images…</Text>
             <Text style={styles.overlayProgress}>
               {importProgress.current} of {importProgress.total}
@@ -244,97 +340,3 @@ export default function ConfigScreen({ navigation }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111111' },
-  card: {
-    backgroundColor: '#1e1e1e',
-    borderRadius: 10,
-    margin: 12,
-    marginBottom: 0,
-    padding: 16,
-    borderColor: '#2a2a2a',
-    borderWidth: 1,
-  },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#0086A3', marginBottom: 12 },
-  label: { fontSize: 13, color: '#aaaaaa', fontWeight: '600', marginBottom: 4 },
-  hint: { fontSize: 12, color: '#7A7A7A', marginBottom: 10 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#2a2a2a',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#ffffff',
-    backgroundColor: '#262626',
-    width: 120,
-  },
-  colorGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 4,
-  },
-  colorSwatch: {
-    width: 72,
-    height: 64,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#ccc',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  colorSwatchSelected: {
-    borderColor: '#0086A3',
-    borderWidth: 2.5,
-  },
-  colorSwatchCheck: { fontSize: 18, fontWeight: '700', color: '#1a1a1a' },
-  colorSwatchLabel: { fontSize: 11, color: '#333', fontWeight: '600' },
-  actionBtn: {
-    backgroundColor: '#0086A3',
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  actionBtnSecondary: { backgroundColor: '#2a2a2a' },
-  actionBtnDisabled: { backgroundColor: '#aaa' },
-  actionBtnDanger: { backgroundColor: '#c62828' },
-  actionBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 999,
-  },
-  overlayCard: {
-    backgroundColor: '#1e1e1e',
-    borderRadius: 16,
-    padding: 32,
-    alignItems: 'center',
-    width: 260,
-    gap: 12,
-    elevation: 8,
-  },
-  overlayTitle: { fontSize: 17, fontWeight: '700', color: '#ffffff' },
-  overlayProgress: { fontSize: 14, color: '#aaaaaa' },
-  progressBarBg: {
-    width: '100%',
-    height: 8,
-    backgroundColor: '#2a2a2a',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#0086A3',
-    borderRadius: 4,
-  },
-  versionContainer: {
-    alignItems: 'center',
-    paddingVertical: 24,
-  },
-  versionText: { fontSize: 13, color: '#555' },
-});

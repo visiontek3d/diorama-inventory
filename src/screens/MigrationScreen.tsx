@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -10,6 +10,7 @@ import * as SQLite from 'expo-sqlite';
 import * as FileSystem from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
+import { useAppTheme } from '../lib/theme';
 
 const MIGRATION_KEY = 'supabase_migration_done';
 
@@ -25,6 +26,7 @@ export async function markMigrationDone(): Promise<void> {
 type Status = 'checking' | 'needed' | 'running' | 'done' | 'skipped' | 'error';
 
 export default function MigrationScreen({ onComplete }: { onComplete: () => void }) {
+  const C = useAppTheme();
   const [status, setStatus] = useState<Status>('checking');
   const [progress, setProgress] = useState({ current: 0, total: 0, label: '' });
   const [errorMsg, setErrorMsg] = useState('');
@@ -168,12 +170,49 @@ export default function MigrationScreen({ onComplete }: { onComplete: () => void
     onComplete();
   };
 
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: C.background,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24,
+    },
+    card: {
+      backgroundColor: C.card,
+      borderRadius: 16,
+      padding: 32,
+      width: '100%',
+      alignItems: 'center',
+      elevation: 4,
+      gap: 12,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    title: { fontSize: 20, fontWeight: '700', color: C.text, textAlign: 'center' },
+    body: { fontSize: 14, color: C.textSecondary, textAlign: 'center', lineHeight: 22 },
+    progress: { fontSize: 14, color: C.textSecondary },
+    progressBarBg: {
+      width: '100%', height: 8, backgroundColor: C.separator, borderRadius: 4, overflow: 'hidden',
+    },
+    progressBarFill: { height: '100%', backgroundColor: C.accent, borderRadius: 4 },
+    btn: {
+      backgroundColor: C.accent, borderRadius: 10, paddingVertical: 14,
+      paddingHorizontal: 32, alignItems: 'center', marginTop: 8, width: '100%',
+    },
+    btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+    skipBtn: { marginTop: 4, padding: 10 },
+    skipText: { color: C.textSecondary, fontSize: 14 },
+    doneIcon: { fontSize: 48, color: '#1a8a3a' },
+    errorIcon: { fontSize: 48, color: C.danger },
+  }), [C]);
+
   return (
     <View style={styles.container}>
       <View style={styles.card}>
         {status === 'checking' && (
           <>
-            <ActivityIndicator size="large" color="#3367d6" />
+            <ActivityIndicator size="large" color={C.accent} />
             <Text style={styles.title}>Checking local data…</Text>
           </>
         )}
@@ -196,7 +235,7 @@ export default function MigrationScreen({ onComplete }: { onComplete: () => void
 
         {status === 'running' && (
           <>
-            <ActivityIndicator size="large" color="#3367d6" />
+            <ActivityIndicator size="large" color={C.accent} />
             <Text style={styles.title}>{progress.label}</Text>
             <Text style={styles.progress}>
               {progress.current} of {progress.total}
@@ -226,7 +265,7 @@ export default function MigrationScreen({ onComplete }: { onComplete: () => void
 
         {status === 'skipped' && (
           <>
-            <ActivityIndicator size="small" color="#3367d6" />
+            <ActivityIndicator size="small" color={C.accent} />
             <Text style={styles.title}>No local data found</Text>
           </>
         )}
@@ -248,38 +287,3 @@ export default function MigrationScreen({ onComplete }: { onComplete: () => void
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 32,
-    width: '100%',
-    alignItems: 'center',
-    elevation: 4,
-    gap: 12,
-  },
-  title: { fontSize: 20, fontWeight: '700', color: '#1a1a1a', textAlign: 'center' },
-  body: { fontSize: 14, color: '#555', textAlign: 'center', lineHeight: 22 },
-  progress: { fontSize: 14, color: '#555' },
-  progressBarBg: {
-    width: '100%', height: 8, backgroundColor: '#e0e0e0', borderRadius: 4, overflow: 'hidden',
-  },
-  progressBarFill: { height: '100%', backgroundColor: '#3367d6', borderRadius: 4 },
-  btn: {
-    backgroundColor: '#3367d6', borderRadius: 10, paddingVertical: 14,
-    paddingHorizontal: 32, alignItems: 'center', marginTop: 8, width: '100%',
-  },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  skipBtn: { marginTop: 4, padding: 10 },
-  skipText: { color: '#888', fontSize: 14 },
-  doneIcon: { fontSize: 48, color: '#1a8a3a' },
-  errorIcon: { fontSize: 48, color: '#c62828' },
-});

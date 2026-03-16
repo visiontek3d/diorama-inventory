@@ -32,6 +32,7 @@ export const COMPONENT_LABELS: Record<Component, string> = {
 };
 
 export type RootStackParamList = {
+  Home: undefined;
   SkuList: undefined;
   SkuDetail: { sku: string };
   AddEditSku: { sku?: string };
@@ -39,4 +40,34 @@ export type RootStackParamList = {
   OneOffScan: undefined;
   BulkImport: undefined;
   Config: undefined;
+  LiftList: undefined;
+  LiftScan: undefined;
+  LiftColorSettings: undefined;
+  LiftColorAddEdit: { colorId?: number };
 };
+
+export interface Lift {
+  id: number;
+  size: '2high' | '3high';
+  variation: 'primary' | 'extender';
+  color: string;
+  qty: number;
+}
+
+export interface LiftTransaction {
+  id: number;
+  lift_id: number;
+  delta: number;
+  user_email: string | null;
+  created_at: string;
+}
+
+export interface LiftColor {
+  id: number;
+  name: string;
+  has_2high: boolean;
+  has_3high: boolean;
+  color_hex: string;
+  photo_url: string | null;
+  sort_order: number;
+}

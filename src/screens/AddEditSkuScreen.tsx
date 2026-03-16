@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -16,10 +16,12 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { createDiorama, getDiorama, updateDiorama } from '../db/database';
 import { RootStackParamList } from '../types';
+import { useAppTheme } from '../lib/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddEditSku'>;
 
 export default function AddEditSkuScreen({ route, navigation }: Props) {
+  const C = useAppTheme();
   const editSku = route.params?.sku;
   const isEdit = !!editSku;
 
@@ -109,6 +111,89 @@ export default function AddEditSkuScreen({ route, navigation }: Props) {
     }
   };
 
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.background },
+    card: {
+      backgroundColor: C.card,
+      borderRadius: 10,
+      margin: 12,
+      marginBottom: 0,
+      padding: 16,
+      elevation: 1,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    label: {
+      fontSize: 12,
+      color: C.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginBottom: 6,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: C.inputBorder,
+      borderRadius: 8,
+      padding: 10,
+      fontSize: 15,
+      color: C.inputText,
+      backgroundColor: C.input,
+    },
+    inputDisabled: { backgroundColor: C.separator, color: C.textSecondary },
+    inputMultiline: { height: 80, textAlignVertical: 'top' },
+    photoPlaceholder: {
+      height: 120,
+      borderWidth: 2,
+      borderColor: C.inputBorder,
+      borderStyle: 'dashed',
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    photoPlaceholderText: { color: C.accent, fontSize: 16, fontWeight: '600' },
+    preview: { width: '100%', height: 300, borderRadius: 8, marginBottom: 10 },
+    photoBtn: {
+      padding: 10,
+      borderWidth: 1,
+      borderColor: C.accent,
+      borderRadius: 8,
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    removeBtn: { borderColor: C.danger },
+    photoBtnText: { color: C.accent, fontWeight: '600' },
+    saveBtn: {
+      backgroundColor: C.accent,
+      margin: 12,
+      marginTop: 20,
+      padding: 16,
+      borderRadius: 10,
+      alignItems: 'center',
+      elevation: 2,
+    },
+    saveBtnDisabled: { backgroundColor: '#aaa' },
+    saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+    checkboxRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 16,
+      gap: 10,
+    },
+    checkbox: {
+      width: 24,
+      height: 24,
+      borderRadius: 5,
+      borderWidth: 2,
+      borderColor: C.accent,
+      backgroundColor: C.card,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    checkboxChecked: { backgroundColor: C.accent },
+    checkmark: { color: '#fff', fontSize: 14, fontWeight: '700', lineHeight: 18 },
+    checkboxLabel: { fontSize: 15, color: C.text },
+  }), [C]);
+
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -119,7 +204,7 @@ export default function AddEditSkuScreen({ route, navigation }: Props) {
             value={sku}
             onChangeText={(t) => setSku(t.toUpperCase())}
             placeholder="e.g. DIO-001"
-            placeholderTextColor="#aaa"
+            placeholderTextColor={C.placeholder}
             autoCapitalize="characters"
             editable={!isEdit}
           />
@@ -130,7 +215,7 @@ export default function AddEditSkuScreen({ route, navigation }: Props) {
             value={description}
             onChangeText={setDescription}
             placeholder="Optional description..."
-            placeholderTextColor="#aaa"
+            placeholderTextColor={C.placeholder}
             multiline
             numberOfLines={3}
           />
@@ -152,7 +237,7 @@ export default function AddEditSkuScreen({ route, navigation }: Props) {
                 <Text style={styles.photoBtnText}>Change Photo</Text>
               </Pressable>
               <Pressable style={[styles.photoBtn, styles.removeBtn]} onPress={() => setPhotoUri(null)}>
-                <Text style={[styles.photoBtnText, { color: '#c62828' }]}>Remove Photo</Text>
+                <Text style={[styles.photoBtnText, { color: C.danger }]}>Remove Photo</Text>
               </Pressable>
             </View>
           ) : (
@@ -173,84 +258,3 @@ export default function AddEditSkuScreen({ route, navigation }: Props) {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    margin: 12,
-    marginBottom: 0,
-    padding: 16,
-    elevation: 1,
-  },
-  label: {
-    fontSize: 12,
-    color: '#888',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 6,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 15,
-    color: '#1a1a1a',
-    backgroundColor: '#fafafa',
-  },
-  inputDisabled: { backgroundColor: '#eee', color: '#888' },
-  inputMultiline: { height: 80, textAlignVertical: 'top' },
-  photoPlaceholder: {
-    height: 120,
-    borderWidth: 2,
-    borderColor: '#ddd',
-    borderStyle: 'dashed',
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  photoPlaceholderText: { color: '#3367d6', fontSize: 16, fontWeight: '600' },
-  preview: { width: '100%', height: 300, borderRadius: 8, marginBottom: 10 },
-  photoBtn: {
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#3367d6',
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  removeBtn: { borderColor: '#c62828' },
-  photoBtnText: { color: '#3367d6', fontWeight: '600' },
-  saveBtn: {
-    backgroundColor: '#3367d6',
-    margin: 12,
-    marginTop: 20,
-    padding: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-    elevation: 2,
-  },
-  saveBtnDisabled: { backgroundColor: '#aaa' },
-  saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-    gap: 10,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 5,
-    borderWidth: 2,
-    borderColor: '#3367d6',
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxChecked: { backgroundColor: '#3367d6' },
-  checkmark: { color: '#fff', fontSize: 14, fontWeight: '700', lineHeight: 18 },
-  checkboxLabel: { fontSize: 15, color: '#1a1a1a' },
-});

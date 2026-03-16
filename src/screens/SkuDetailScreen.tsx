@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   Image,
@@ -12,12 +12,14 @@ import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { adjustInventory, deleteDiorama, getDiorama, getTransactions } from '../db/database';
 import { Component, COMPONENT_LABELS, Diorama, RootStackParamList, Transaction } from '../types';
+import { useAppTheme } from '../lib/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SkuDetail'>;
 
 const COMPONENTS: Component[] = ['walls', 'open_door', 'lift'];
 
 export default function SkuDetailScreen({ route, navigation }: Props) {
+  const C = useAppTheme();
   const { sku } = route.params;
   const [diorama, setDiorama] = useState<Diorama | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -42,7 +44,7 @@ export default function SkuDetailScreen({ route, navigation }: Props) {
       title: sku,
       headerRight: () => (
         <Pressable onPress={() => navigation.navigate('AddEditSku', { sku })} style={{ marginRight: 4 }}>
-          <Text style={styles.headerBtn}>Edit</Text>
+          <Text style={{ color: '#0086A3', fontSize: 16 }}>Edit</Text>
         </Pressable>
       ),
     });
@@ -66,6 +68,87 @@ export default function SkuDetailScreen({ route, navigation }: Props) {
     await adjustInventory(sku, component, direction);
     load();
   };
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.background },
+    photo: { width: '100%', height: 340 },
+    photoPlaceholder: {
+      width: '100%',
+      height: 120,
+      backgroundColor: C.card,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    photoPlaceholderText: { color: C.textSecondary, fontSize: 14 },
+    card: {
+      backgroundColor: C.card,
+      borderRadius: 10,
+      margin: 12,
+      marginBottom: 0,
+      padding: 16,
+      borderColor: C.cardBorder,
+      borderWidth: 1,
+    },
+    sectionTitle: { fontSize: 16, fontWeight: '700', color: C.accent, marginBottom: 12 },
+    label: { fontSize: 12, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
+    value: { fontSize: 16, color: C.text, marginTop: 2 },
+    inventoryRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: C.separator,
+    },
+    compLabel: { flex: 1, fontSize: 15, color: C.textSecondary },
+    counter: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    counterBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: C.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    counterBtnText: { fontSize: 20, color: '#ffffff', fontWeight: '700', lineHeight: 24 },
+    counterValue: { fontSize: 18, fontWeight: '700', color: C.text, minWidth: 30, textAlign: 'center' },
+    txRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 6,
+      borderBottomWidth: 1,
+      borderBottomColor: C.separator,
+    },
+    txLabel: { flex: 1, fontSize: 14, color: C.textSecondary },
+    txQty: { fontSize: 14, fontWeight: '700', marginRight: 8 },
+    txIn: { color: '#1a8a3a' },
+    txOut: { color: C.danger },
+    txUser: { fontSize: 11, color: C.textSecondary, marginRight: 8 },
+    txDate: { fontSize: 12, color: C.textSecondary },
+    deleteBtn: {
+      margin: 12,
+      marginTop: 20,
+      padding: 14,
+      borderRadius: 8,
+      borderWidth: 1.5,
+      borderColor: C.danger,
+      alignItems: 'center',
+    },
+    deleteBtnText: { color: C.danger, fontWeight: '700', fontSize: 15 },
+    carryStockRow: { flexDirection: 'row', alignItems: 'center', marginTop: 14, gap: 10 },
+    carryStockBox: {
+      width: 22,
+      height: 22,
+      borderRadius: 4,
+      borderWidth: 2,
+      borderColor: C.accent,
+      backgroundColor: 'transparent',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    carryStockBoxChecked: { backgroundColor: C.accent },
+    carryStockCheck: { color: '#fff', fontSize: 13, fontWeight: '700', lineHeight: 17 },
+    carryStockLabel: { fontSize: 15, color: C.textSecondary },
+  }), [C]);
 
   if (!diorama) return null;
 
@@ -150,85 +233,3 @@ function formatDate(iso: string) {
   const d = new Date(iso);
   return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111111' },
-  photo: { width: '100%', height: 340 },
-  photoPlaceholder: {
-    width: '100%',
-    height: 120,
-    backgroundColor: '#1e1e1e',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  photoPlaceholderText: { color: '#7A7A7A', fontSize: 14 },
-  card: {
-    backgroundColor: '#1e1e1e',
-    borderRadius: 10,
-    margin: 12,
-    marginBottom: 0,
-    padding: 16,
-    borderColor: '#2a2a2a',
-    borderWidth: 1,
-  },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#0086A3', marginBottom: 12 },
-  label: { fontSize: 12, color: '#7A7A7A', textTransform: 'uppercase', letterSpacing: 0.5 },
-  value: { fontSize: 16, color: '#ffffff', marginTop: 2 },
-  inventoryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2a2a2a',
-  },
-  compLabel: { flex: 1, fontSize: 15, color: '#aaaaaa' },
-  counter: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  counterBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#0086A3',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  counterBtnText: { fontSize: 20, color: '#ffffff', fontWeight: '700', lineHeight: 24 },
-  counterValue: { fontSize: 18, fontWeight: '700', color: '#ffffff', minWidth: 30, textAlign: 'center' },
-  txRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2a2a2a',
-  },
-  txLabel: { flex: 1, fontSize: 14, color: '#aaaaaa' },
-  txQty: { fontSize: 14, fontWeight: '700', marginRight: 8 },
-  txIn: { color: '#1a8a3a' },
-  txOut: { color: '#c62828' },
-  txUser: { fontSize: 11, color: '#7A7A7A', marginRight: 8 },
-  txDate: { fontSize: 12, color: '#7A7A7A' },
-  deleteBtn: {
-    margin: 12,
-    marginTop: 20,
-    padding: 14,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: '#c62828',
-    alignItems: 'center',
-  },
-  deleteBtnText: { color: '#c62828', fontWeight: '700', fontSize: 15 },
-  headerBtn: { color: '#0086A3', fontSize: 16 },
-  carryStockRow: { flexDirection: 'row', alignItems: 'center', marginTop: 14, gap: 10 },
-  carryStockBox: {
-    width: 22,
-    height: 22,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: '#0086A3',
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  carryStockBoxChecked: { backgroundColor: '#0086A3' },
-  carryStockCheck: { color: '#fff', fontSize: 13, fontWeight: '700', lineHeight: 17 },
-  carryStockLabel: { fontSize: 15, color: '#aaaaaa' },
-});

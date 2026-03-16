@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -12,11 +12,13 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { adjustOneOffInventory, getDiorama } from '../db/database';
 import { Diorama, RootStackParamList } from '../types';
+import { useAppTheme } from '../lib/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OneOffScan'>;
 type Stage = 'scanning' | 'confirm';
 
 export default function OneOffScanScreen({ navigation }: Props) {
+  const C = useAppTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const [stage, setStage] = useState<Stage>('scanning');
   const [diorama, setDiorama] = useState<Diorama | null>(null);
@@ -95,7 +97,78 @@ export default function OneOffScanScreen({ navigation }: Props) {
     );
   };
 
-  if (!permission) return <View style={styles.center}><Text>Requesting camera...</Text></View>;
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: '#000' },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: C.background },
+    permText: { fontSize: 15, color: C.text, textAlign: 'center', marginBottom: 16 },
+    permBtn: { backgroundColor: C.accent, padding: 14, borderRadius: 8 },
+    permBtnText: { color: '#fff', fontWeight: '700' },
+    overlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', paddingBottom: 80 },
+    modeLabel: {
+      color: '#fff', fontSize: 13, fontWeight: '700', letterSpacing: 1,
+      backgroundColor: 'rgba(100,60,180,0.75)', paddingHorizontal: 16, paddingVertical: 6,
+      borderRadius: 20, marginBottom: 24,
+    },
+    scanFrame: {
+      width: 240, height: 240,
+      borderWidth: 2, borderColor: '#fff', borderRadius: 12, backgroundColor: 'transparent',
+    },
+    scanHint: {
+      color: '#fff', marginTop: 20, fontSize: 15,
+      backgroundColor: C.scanOverlay, paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20,
+    },
+    cancelBtn: {
+      position: 'absolute', bottom: 40, alignSelf: 'center',
+      backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 28, paddingVertical: 12,
+      borderRadius: 24, borderWidth: 1, borderColor: '#fff',
+    },
+    cancelBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+    confirmContainer: { flex: 1, backgroundColor: C.background, padding: 20, paddingTop: 60 },
+    confirmSku: { fontSize: 24, fontWeight: '800', color: C.text, marginBottom: 4 },
+    confirmDesc: { fontSize: 14, color: C.textSecondary, marginBottom: 8 },
+    fieldLabel: {
+      fontSize: 12, color: C.textSecondary, textTransform: 'uppercase',
+      letterSpacing: 0.5, marginBottom: 8, marginTop: 16,
+    },
+    pillRow: { flexDirection: 'row', gap: 8 },
+    pill: {
+      paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20,
+      borderWidth: 1.5, borderColor: C.inputBorder, backgroundColor: C.card,
+    },
+    pillIn: { backgroundColor: '#1a8a3a', borderColor: '#1a8a3a' },
+    pillOut: { backgroundColor: C.danger, borderColor: C.danger },
+    pillText: { color: C.text, fontWeight: '600', fontSize: 14 },
+    pillTextActive: { color: '#fff' },
+    card: {
+      backgroundColor: C.card, borderRadius: 10, elevation: 1, marginTop: 4, overflow: 'hidden',
+      borderWidth: 1, borderColor: C.cardBorder,
+    },
+    qtyRow: {
+      flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12,
+      borderBottomWidth: 1, borderBottomColor: C.separator,
+    },
+    qtyLabel: { flex: 1, fontSize: 15, color: C.text },
+    qtyControls: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    qtyBtn: {
+      width: 34, height: 34, borderRadius: 17, backgroundColor: C.separator,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    qtyBtnText: { fontSize: 20, color: C.accent, fontWeight: '700', lineHeight: 24 },
+    qtyInput: {
+      borderWidth: 1, borderColor: C.inputBorder, borderRadius: 8, padding: 6,
+      fontSize: 18, fontWeight: '700', color: C.inputText,
+      backgroundColor: C.input, textAlign: 'center', width: 56,
+    },
+    confirmBtn: {
+      backgroundColor: C.accent, padding: 16, borderRadius: 10,
+      alignItems: 'center', marginTop: 24, elevation: 2,
+    },
+    confirmBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+    rescanBtn: { alignItems: 'center', marginTop: 14, padding: 10 },
+    rescanBtnText: { color: C.accent, fontWeight: '600', fontSize: 15 },
+  }), [C]);
+
+  if (!permission) return <View style={styles.center}><Text style={styles.permText}>Requesting camera...</Text></View>;
   if (!permission.granted) {
     return (
       <View style={styles.center}>
@@ -193,71 +266,3 @@ export default function OneOffScanScreen({ navigation }: Props) {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: '#f5f5f5' },
-  permText: { fontSize: 15, color: '#333', textAlign: 'center', marginBottom: 16 },
-  permBtn: { backgroundColor: '#3367d6', padding: 14, borderRadius: 8 },
-  permBtnText: { color: '#fff', fontWeight: '700' },
-  overlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', paddingBottom: 80 },
-  modeLabel: {
-    color: '#fff', fontSize: 13, fontWeight: '700', letterSpacing: 1,
-    backgroundColor: 'rgba(100,60,180,0.75)', paddingHorizontal: 16, paddingVertical: 6,
-    borderRadius: 20, marginBottom: 24,
-  },
-  scanFrame: {
-    width: 240, height: 240,
-    borderWidth: 2, borderColor: '#fff', borderRadius: 12, backgroundColor: 'transparent',
-  },
-  scanHint: {
-    color: '#fff', marginTop: 20, fontSize: 15,
-    backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20,
-  },
-  cancelBtn: {
-    position: 'absolute', bottom: 40, alignSelf: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 28, paddingVertical: 12,
-    borderRadius: 24, borderWidth: 1, borderColor: '#fff',
-  },
-  cancelBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  confirmContainer: { flex: 1, backgroundColor: '#f5f5f5', padding: 20, paddingTop: 60 },
-  confirmSku: { fontSize: 24, fontWeight: '800', color: '#1a1a1a', marginBottom: 4 },
-  confirmDesc: { fontSize: 14, color: '#555', marginBottom: 8 },
-  fieldLabel: {
-    fontSize: 12, color: '#888', textTransform: 'uppercase',
-    letterSpacing: 0.5, marginBottom: 8, marginTop: 16,
-  },
-  pillRow: { flexDirection: 'row', gap: 8 },
-  pill: {
-    paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20,
-    borderWidth: 1.5, borderColor: '#ccc', backgroundColor: '#fff',
-  },
-  pillIn: { backgroundColor: '#1a8a3a', borderColor: '#1a8a3a' },
-  pillOut: { backgroundColor: '#c62828', borderColor: '#c62828' },
-  pillText: { color: '#333', fontWeight: '600', fontSize: 14 },
-  pillTextActive: { color: '#fff' },
-  card: { backgroundColor: '#fff', borderRadius: 10, elevation: 1, marginTop: 4, overflow: 'hidden' },
-  qtyRow: {
-    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
-  },
-  qtyLabel: { flex: 1, fontSize: 15, color: '#333' },
-  qtyControls: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  qtyBtn: {
-    width: 34, height: 34, borderRadius: 17, backgroundColor: '#ede9fe',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  qtyBtnText: { fontSize: 20, color: '#6d28d9', fontWeight: '700', lineHeight: 24 },
-  qtyInput: {
-    borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 6,
-    fontSize: 18, fontWeight: '700', color: '#1a1a1a',
-    backgroundColor: '#fafafa', textAlign: 'center', width: 56,
-  },
-  confirmBtn: {
-    backgroundColor: '#6d28d9', padding: 16, borderRadius: 10,
-    alignItems: 'center', marginTop: 24, elevation: 2,
-  },
-  confirmBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  rescanBtn: { alignItems: 'center', marginTop: 14, padding: 10 },
-  rescanBtnText: { color: '#6d28d9', fontWeight: '600', fontSize: 15 },
-});

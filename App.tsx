@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -7,7 +7,9 @@ import { Session } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
 import { supabase } from './src/lib/supabase';
 import { RootStackParamList } from './src/types';
+import { darkColors, lightColors } from './src/lib/theme';
 import MigrationScreen, { isMigrationDone } from './src/screens/MigrationScreen';
+import HomeScreen from './src/screens/HomeScreen';
 import SkuListScreen from './src/screens/SkuListScreen';
 import SkuDetailScreen from './src/screens/SkuDetailScreen';
 import AddEditSkuScreen from './src/screens/AddEditSkuScreen';
@@ -15,7 +17,10 @@ import ScanScreen from './src/screens/ScanScreen';
 import OneOffScanScreen from './src/screens/OneOffScanScreen';
 import BulkImportScreen from './src/screens/BulkImportScreen';
 import ConfigScreen from './src/screens/ConfigScreen';
-
+import LiftListScreen from './src/screens/LiftListScreen';
+import LiftScanScreen from './src/screens/LiftScanScreen';
+import LiftColorScreen from './src/screens/LiftColorScreen';
+import LiftColorAddEditScreen from './src/screens/LiftColorAddEditScreen';
 import AuthScreen from './src/screens/AuthScreen';
 
 const IS_EXPO_GO = Constants.appOwnership === 'expo';
@@ -23,6 +28,8 @@ const IS_EXPO_GO = Constants.appOwnership === 'expo';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
+  const scheme = useColorScheme();
+  const C = scheme === 'dark' ? darkColors : lightColors;
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [migrationDone, setMigrationDone] = useState(false);
@@ -42,8 +49,8 @@ export default function App() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111111' }}>
-        <ActivityIndicator size="large" color="#0086A3" />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.background }}>
+        <ActivityIndicator size="large" color={C.accent} />
       </View>
     );
   }
@@ -66,6 +73,11 @@ export default function App() {
           headerTitleStyle: { fontWeight: '700', color: '#ffffff' },
         }}
       >
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{ headerShown: false }}
+        />
         <Stack.Screen
           name="SkuList"
           component={SkuListScreen}
@@ -100,6 +112,28 @@ export default function App() {
           name="Config"
           component={ConfigScreen}
           options={{ title: 'Settings' }}
+        />
+        <Stack.Screen
+          name="LiftList"
+          component={LiftListScreen}
+          options={{ title: 'Lift Inventory' }}
+        />
+        <Stack.Screen
+          name="LiftScan"
+          component={LiftScanScreen}
+          options={{ title: 'Lift Scan', headerShown: false }}
+        />
+        <Stack.Screen
+          name="LiftColorSettings"
+          component={LiftColorScreen}
+          options={{ title: 'Color Settings' }}
+        />
+        <Stack.Screen
+          name="LiftColorAddEdit"
+          component={LiftColorAddEditScreen}
+          options={({ route }) => ({
+            title: route.params?.colorId ? 'Edit Color' : 'Add Color',
+          })}
         />
       </Stack.Navigator>
     </NavigationContainer>

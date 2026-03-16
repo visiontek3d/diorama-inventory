@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -11,6 +11,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { bulkImportDioramas } from '../db/database';
 import { RootStackParamList } from '../types';
+import { useAppTheme } from '../lib/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'BulkImport'>;
 
@@ -24,6 +25,7 @@ type PreviewRow = {
 };
 
 export default function BulkImportScreen({ navigation }: Props) {
+  const C = useAppTheme();
   const [preview, setPreview] = useState<PreviewRow[]>([]);
   const [fileName, setFileName] = useState('');
   const [importing, setImporting] = useState(false);
@@ -101,6 +103,79 @@ export default function BulkImportScreen({ navigation }: Props) {
 
   const validCount = preview.filter((r) => !r.error).length;
   const errorCount = preview.filter((r) => !!r.error).length;
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.background },
+    infoCard: {
+      backgroundColor: C.card,
+      margin: 12,
+      borderRadius: 10,
+      padding: 14,
+      elevation: 1,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    infoTitle: { fontWeight: '700', fontSize: 14, color: C.text, marginBottom: 6 },
+    infoText: { fontSize: 13, color: C.textSecondary, marginBottom: 8 },
+    code: {
+      fontFamily: 'monospace',
+      fontSize: 12,
+      color: C.text,
+      backgroundColor: C.separator,
+      padding: 6,
+      borderRadius: 4,
+      marginBottom: 4,
+    },
+    pickBtn: {
+      backgroundColor: C.accent,
+      marginHorizontal: 12,
+      padding: 14,
+      borderRadius: 10,
+      alignItems: 'center',
+      elevation: 2,
+    },
+    pickBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+    summary: { marginHorizontal: 12, marginTop: 16, marginBottom: 8 },
+    summaryText: { fontSize: 13, color: C.textSecondary, fontWeight: '600' },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: C.card,
+      marginHorizontal: 12,
+      marginBottom: 6,
+      borderRadius: 8,
+      padding: 12,
+      elevation: 1,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+    },
+    rowError: { backgroundColor: C.card, borderWidth: 1, borderColor: C.danger },
+    rowMain: { flex: 1 },
+    rowSku: { fontWeight: '700', fontSize: 14, color: C.text },
+    rowDesc: { fontSize: 12, color: C.textSecondary, marginTop: 2 },
+    rowErrorText: { fontSize: 12, color: C.danger, marginTop: 2 },
+    rowBadges: { flexDirection: 'row', gap: 4 },
+    badge: {
+      fontSize: 11,
+      color: C.accent,
+      fontWeight: '600',
+      backgroundColor: C.separator,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    importBtn: {
+      backgroundColor: '#1a8a3a',
+      margin: 12,
+      marginTop: 20,
+      padding: 16,
+      borderRadius: 10,
+      alignItems: 'center',
+      elevation: 2,
+    },
+    importBtnDisabled: { backgroundColor: '#aaa' },
+    importBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  }), [C]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -216,72 +291,3 @@ function parseQty(val?: string): number {
   const n = parseInt(val ?? '0', 10);
   return isNaN(n) || n < 0 ? 0 : n;
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  infoCard: {
-    backgroundColor: '#fff',
-    margin: 12,
-    borderRadius: 10,
-    padding: 14,
-    elevation: 1,
-  },
-  infoTitle: { fontWeight: '700', fontSize: 14, color: '#1a1a1a', marginBottom: 6 },
-  infoText: { fontSize: 13, color: '#555', marginBottom: 8 },
-  code: {
-    fontFamily: 'monospace',
-    fontSize: 12,
-    color: '#333',
-    backgroundColor: '#f0f0f0',
-    padding: 6,
-    borderRadius: 4,
-    marginBottom: 4,
-  },
-  pickBtn: {
-    backgroundColor: '#3367d6',
-    marginHorizontal: 12,
-    padding: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    elevation: 2,
-  },
-  pickBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  summary: { marginHorizontal: 12, marginTop: 16, marginBottom: 8 },
-  summaryText: { fontSize: 13, color: '#555', fontWeight: '600' },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    marginHorizontal: 12,
-    marginBottom: 6,
-    borderRadius: 8,
-    padding: 12,
-    elevation: 1,
-  },
-  rowError: { backgroundColor: '#fff5f5', borderWidth: 1, borderColor: '#f5c6c6' },
-  rowMain: { flex: 1 },
-  rowSku: { fontWeight: '700', fontSize: 14, color: '#1a1a1a' },
-  rowDesc: { fontSize: 12, color: '#555', marginTop: 2 },
-  rowErrorText: { fontSize: 12, color: '#c62828', marginTop: 2 },
-  rowBadges: { flexDirection: 'row', gap: 4 },
-  badge: {
-    fontSize: 11,
-    color: '#3367d6',
-    fontWeight: '600',
-    backgroundColor: '#e8f0fe',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  importBtn: {
-    backgroundColor: '#1a8a3a',
-    margin: 12,
-    marginTop: 20,
-    padding: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-    elevation: 2,
-  },
-  importBtnDisabled: { backgroundColor: '#aaa' },
-  importBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-});
