@@ -42,8 +42,8 @@ export default function App() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color="#3367d6" />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#111111' }}>
+        <ActivityIndicator size="large" color="#0086A3" />
       </View>
     );
   }
@@ -58,12 +58,12 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Stack.Navigator
         screenOptions={{
-          headerStyle: { backgroundColor: '#fff' },
-          headerTintColor: '#3367d6',
-          headerTitleStyle: { fontWeight: '700', color: '#1a1a1a' },
+          headerStyle: { backgroundColor: '#000000' },
+          headerTintColor: '#0086A3',
+          headerTitleStyle: { fontWeight: '700', color: '#ffffff' },
         }}
       >
         <Stack.Screen

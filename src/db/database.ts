@@ -127,13 +127,13 @@ export async function deleteDiorama(sku: string): Promise<void> {
 export async function adjustInventory(
   sku: string,
   component: Component,
-  qty: number
+  delta: number
 ): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser();
   const { error } = await supabase.rpc('adjust_inventory', {
     p_sku: sku,
     p_component: component,
-    p_delta: qty,
+    p_delta: delta,
     p_user_email: user?.email ?? null,
   });
   if (error) throw error;

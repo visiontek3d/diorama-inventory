@@ -9,6 +9,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
+
+const LOGO = require('../../assets/logo.png');
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -44,15 +46,19 @@ export default function SkuListScreen({ navigation }: Props) {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => (
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 17, fontWeight: '700', color: '#1a1a1a' }}>Diorama Inventory</Text>
-          {userEmail ? <Text style={{ fontSize: 11, color: '#888', marginTop: 1 }}>{userEmail}</Text> : null}
+      headerLeft: () => (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginLeft: 4 }}>
+          <Image source={LOGO} style={{ height: 64, width: 64 }} resizeMode="contain" />
+          <View>
+            <Text style={{ fontSize: 17, fontWeight: '700', color: '#ffffff' }}>Diorama Inventory</Text>
+            {userEmail ? <Text style={{ fontSize: 11, color: '#7A7A7A', marginTop: 1 }}>{userEmail}</Text> : null}
+          </View>
         </View>
       ),
+      headerTitle: () => null,
       headerRight: () => (
         <Pressable onPress={() => navigation.navigate('Config')} style={{ marginRight: 4, padding: 4 }}>
-          <Ionicons name="settings-outline" size={22} color="#3367d6" />
+          <Ionicons name="settings-outline" size={22} color="#0086A3" />
         </Pressable>
       ),
     });
@@ -125,17 +131,24 @@ export default function SkuListScreen({ navigation }: Props) {
         ))}
       </View>
 
-      <TextInput
-        style={styles.search}
-        placeholder="Search SKU or description..."
-        placeholderTextColor="#888"
-        value={query}
-        onChangeText={handleSearch}
-      />
+      <View style={styles.searchRow}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search SKU or description..."
+          placeholderTextColor="#7A7A7A"
+          value={query}
+          onChangeText={handleSearch}
+        />
+        {query.length > 0 && (
+          <Pressable onPress={() => handleSearch('')} style={styles.searchClear}>
+            <Ionicons name="close-circle" size={18} color="#7A7A7A" />
+          </Pressable>
+        )}
+      </View>
 
       {loadingData ? (
         <View style={styles.emptyContainer}>
-          <ActivityIndicator size="large" color="#3367d6" />
+          <ActivityIndicator size="large" color="#0086A3" />
         </View>
       ) : filtered.length === 0 ? (
         <View style={styles.emptyContainer}>
@@ -281,12 +294,12 @@ function Badge({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: '#111111' },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: '#000000',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#222',
   },
   tab: {
     flex: 1,
@@ -295,29 +308,39 @@ const styles = StyleSheet.create({
     borderBottomWidth: 3,
     borderBottomColor: 'transparent',
   },
-  tabActive: { borderBottomColor: '#3367d6' },
-  tabText: { fontSize: 12, fontWeight: '600', color: '#888' },
-  tabTextActive: { color: '#3367d6' },
-  settingsBtn: { color: '#3367d6', fontSize: 15, fontWeight: '600' },
-  search: {
+  tabActive: { borderBottomColor: '#0086A3' },
+  tabText: { fontSize: 12, fontWeight: '600', color: '#7A7A7A' },
+  tabTextActive: { color: '#0086A3' },
+  settingsBtn: { color: '#0086A3', fontSize: 15, fontWeight: '600' },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     margin: 12,
-    padding: 10,
-    backgroundColor: '#fff',
+    backgroundColor: '#1e1e1e',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#2a2a2a',
+  },
+  searchInput: {
+    flex: 1,
+    padding: 10,
     fontSize: 15,
-    color: '#000',
+    color: '#ffffff',
+  },
+  searchClear: {
+    paddingHorizontal: 10,
+    paddingVertical: 10,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#3d3d3d',
     marginHorizontal: 12,
     marginBottom: 8,
     borderRadius: 8,
     padding: 10,
-    elevation: 1,
+    borderColor: '#2a2a2a',
+    borderWidth: 1,
     gap: 10,
   },
   thumbnail: {
@@ -330,23 +353,23 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 6,
-    backgroundColor: '#e8e8e8',
+    backgroundColor: '#2a2a2a',
   },
   rowText: { flex: 1 },
-  sku: { fontSize: 16, fontWeight: '700', color: '#1a1a1a' },
-  desc: { fontSize: 13, color: '#555', marginTop: 2 },
+  sku: { fontSize: 16, fontWeight: '700', color: '#ffffff' },
+  desc: { fontSize: 13, color: '#7A7A7A', marginTop: 2 },
   restockHint: { fontSize: 11, color: '#b45309', marginTop: 3, fontWeight: '600' },
   badges: { flexDirection: 'row', gap: 6 },
   badge: {
     alignItems: 'center',
-    backgroundColor: '#e8f0fe',
+    backgroundColor: '#0086A3',
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 4,
     minWidth: 36,
   },
-  badgeLabel: { fontSize: 10, color: '#3367d6', fontWeight: '600' },
-  badgeValue: { fontSize: 14, fontWeight: '700', color: '#1a1a1a' },
+  badgeLabel: { fontSize: 10, color: '#e0f7fa', fontWeight: '600' },
+  badgeValue: { fontSize: 14, fontWeight: '700', color: '#ffffff' },
   badgeAlert: { backgroundColor: '#c62828' },
   badgeLabelAlert: { color: '#ffcccc' },
   badgeValueAlert: { color: '#fff' },
@@ -356,18 +379,17 @@ const styles = StyleSheet.create({
   totalsBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#1e1e1e',
     marginHorizontal: 12,
     marginBottom: 8,
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    elevation: 1,
     borderTopWidth: 2,
-    borderTopColor: '#6d28d9',
+    borderTopColor: '#0086A3',
   },
-  totalsLabel: { fontSize: 13, fontWeight: '700', color: '#6d28d9' },
-  empty: { textAlign: 'center', color: '#888', fontSize: 15 },
+  totalsLabel: { fontSize: 13, fontWeight: '700', color: '#0086A3' },
+  empty: { textAlign: 'center', color: '#7A7A7A', fontSize: 15 },
   emptyContainer: { flex: 1, paddingTop: 80, alignItems: 'center', paddingHorizontal: 24 },
   fab_row: {
     flexDirection: 'row',
@@ -378,7 +400,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     flex: 1,
-    backgroundColor: '#3367d6',
+    backgroundColor: '#0086A3',
     paddingHorizontal: 8,
     paddingVertical: 14,
     borderRadius: 28,
@@ -386,6 +408,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   fabSecondary: { backgroundColor: '#555' },
-  fabOneOff: { backgroundColor: '#6d28d9' },
+  fabOneOff: { backgroundColor: '#00607A' },
   fabText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 });

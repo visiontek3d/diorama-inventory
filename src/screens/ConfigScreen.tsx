@@ -19,25 +19,17 @@ import { RootStackParamList } from '../types';
 type Props = NativeStackScreenProps<RootStackParamList, 'Config'>;
 
 const CARRY_STOCK_COLORS: { label: string; value: string }[] = [
-  { label: 'Silver', value: '#e8e8e8' },
-  { label: 'Stone', value: '#d6d3d1' },
-  { label: 'Slate', value: '#cbd5e1' },
-  { label: 'Cool Gray', value: '#d1d5db' },
-  { label: 'Sky', value: '#e0f2fe' },
-  { label: 'Blue', value: '#dbeafe' },
-  { label: 'Indigo', value: '#e0e7ff' },
-  { label: 'Steel', value: '#bfdbfe' },
-  { label: 'Navy', value: '#1e40af' },
-  { label: 'Royal', value: '#2563eb' },
-  { label: 'Teal', value: '#0f766e' },
-  { label: 'Green', value: '#166534' },
-  { label: 'Purple', value: '#6d28d9' },
-  { label: 'Red', value: '#b91c1c' },
-  { label: 'Orange', value: '#c2410c' },
-  { label: 'Gold', value: '#b45309' },
+  { label: 'Dark Ocean', value: '#003D4F' },
+  { label: 'Deep Teal', value: '#005F75' },
+  { label: 'Steel Blue', value: '#546E7A' },
+  { label: 'Charcoal', value: '#3A3A3A' },
+  { label: 'Brand Teal', value: '#0086A3' },
+  { label: 'Cyan', value: '#00BCD4' },
+  { label: 'Ice Blue', value: '#B2EBF2' },
+  { label: 'Arctic', value: '#E0F7FA' },
 ];
 
-export const DEFAULT_CARRY_STOCK_COLOR = '#e8e8e8';
+export const DEFAULT_CARRY_STOCK_COLOR = '#0086A3';
 
 export default function ConfigScreen({ navigation }: Props) {
   const [desiredStock, setDesiredStock] = useState('');
@@ -153,7 +145,7 @@ export default function ConfigScreen({ navigation }: Props) {
             onChangeText={handleDesiredStockChange}
             keyboardType="numeric"
             placeholder="Enter a number"
-            placeholderTextColor="#aaa"
+            placeholderTextColor="#7A7A7A"
             selectTextOnFocus
           />
         </View>
@@ -187,7 +179,7 @@ export default function ConfigScreen({ navigation }: Props) {
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Carry Stock Highlight Color</Text>
           <Text style={styles.hint}>
-            Background color for dioramas with Carry Stock enabled on the main screen.
+            Border color for diorama cards with Carry Stock enabled on the main screen.
           </Text>
           <View style={styles.colorGrid}>
             {CARRY_STOCK_COLORS.map((c) => {
@@ -229,7 +221,7 @@ export default function ConfigScreen({ navigation }: Props) {
       {importing && (
         <View style={styles.overlay}>
           <View style={styles.overlayCard}>
-            <ActivityIndicator size="large" color="#3367d6" />
+            <ActivityIndicator size="large" color="#0086A3" />
             <Text style={styles.overlayTitle}>Importing Images…</Text>
             <Text style={styles.overlayProgress}>
               {importProgress.current} of {importProgress.total}
@@ -254,27 +246,28 @@ export default function ConfigScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: '#111111' },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1e1e1e',
     borderRadius: 10,
     margin: 12,
     marginBottom: 0,
     padding: 16,
-    elevation: 1,
+    borderColor: '#2a2a2a',
+    borderWidth: 1,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1a1a1a', marginBottom: 12 },
-  label: { fontSize: 13, color: '#555', fontWeight: '600', marginBottom: 4 },
-  hint: { fontSize: 12, color: '#888', marginBottom: 10 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#0086A3', marginBottom: 12 },
+  label: { fontSize: 13, color: '#aaaaaa', fontWeight: '600', marginBottom: 4 },
+  hint: { fontSize: 12, color: '#7A7A7A', marginBottom: 10 },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#2a2a2a',
     borderRadius: 8,
     padding: 10,
     fontSize: 18,
     fontWeight: '700',
-    color: '#1a1a1a',
-    backgroundColor: '#fafafa',
+    color: '#ffffff',
+    backgroundColor: '#262626',
     width: 120,
   },
   colorGrid: {
@@ -294,18 +287,18 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   colorSwatchSelected: {
-    borderColor: '#1a1a1a',
+    borderColor: '#0086A3',
     borderWidth: 2.5,
   },
   colorSwatchCheck: { fontSize: 18, fontWeight: '700', color: '#1a1a1a' },
   colorSwatchLabel: { fontSize: 11, color: '#333', fontWeight: '600' },
   actionBtn: {
-    backgroundColor: '#3367d6',
+    backgroundColor: '#0086A3',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  actionBtnSecondary: { backgroundColor: '#555' },
+  actionBtnSecondary: { backgroundColor: '#2a2a2a' },
   actionBtnDisabled: { backgroundColor: '#aaa' },
   actionBtnDanger: { backgroundColor: '#c62828' },
   actionBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
@@ -317,7 +310,7 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   overlayCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1e1e1e',
     borderRadius: 16,
     padding: 32,
     alignItems: 'center',
@@ -325,23 +318,23 @@ const styles = StyleSheet.create({
     gap: 12,
     elevation: 8,
   },
-  overlayTitle: { fontSize: 17, fontWeight: '700', color: '#1a1a1a' },
-  overlayProgress: { fontSize: 14, color: '#555' },
+  overlayTitle: { fontSize: 17, fontWeight: '700', color: '#ffffff' },
+  overlayProgress: { fontSize: 14, color: '#aaaaaa' },
   progressBarBg: {
     width: '100%',
     height: 8,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#2a2a2a',
     borderRadius: 4,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#3367d6',
+    backgroundColor: '#0086A3',
     borderRadius: 4,
   },
   versionContainer: {
     alignItems: 'center',
     paddingVertical: 24,
   },
-  versionText: { fontSize: 13, color: '#aaa' },
+  versionText: { fontSize: 13, color: '#555' },
 });

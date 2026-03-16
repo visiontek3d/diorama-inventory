@@ -54,7 +54,7 @@ export default function AuthScreen() {
         <TextInput
           style={styles.input}
           placeholder="Email"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#7A7A7A"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
@@ -64,7 +64,7 @@ export default function AuthScreen() {
         <TextInput
           style={styles.input}
           placeholder="Password"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#7A7A7A"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -95,16 +95,6 @@ export default function AuthScreen() {
           </Text>
         </Pressable>
 
-        <Pressable
-          style={[styles.switchBtn, { marginTop: 32 }]}
-          onPress={() => {
-            fetch('https://nlwjhqmbwwfigspnnjcm.supabase.co/rest/v1/')
-              .then((r) => Alert.alert('Supabase OK', `Status: ${r.status}`))
-              .catch((e) => Alert.alert('Supabase FAIL', `${e?.message}\n\n${JSON.stringify(e?.cause ?? '')}`))
-          }}
-        >
-          <Text style={[styles.switchText, { color: '#888' }]}>Test network</Text>
-        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -116,34 +106,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 28,
     paddingVertical: 60,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#111111',
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: '#ffffff',
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
-    color: '#888',
+    color: '#7A7A7A',
     textAlign: 'center',
     marginBottom: 32,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1e1e1e',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#2a2a2a',
     borderRadius: 10,
     padding: 14,
     fontSize: 15,
-    color: '#1a1a1a',
+    color: '#ffffff',
     marginBottom: 14,
-    elevation: 1,
   },
   btn: {
-    backgroundColor: '#3367d6',
+    backgroundColor: '#0086A3',
     borderRadius: 10,
     padding: 16,
     alignItems: 'center',
@@ -153,5 +142,5 @@ const styles = StyleSheet.create({
   btnDisabled: { backgroundColor: '#aaa' },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   switchBtn: { marginTop: 20, alignItems: 'center' },
-  switchText: { color: '#3367d6', fontSize: 14, fontWeight: '600' },
+  switchText: { color: '#0086A3', fontSize: 14, fontWeight: '600' },
 });
