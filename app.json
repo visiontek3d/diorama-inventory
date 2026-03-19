@@ -2,7 +2,7 @@
   "expo": {
     "name": "Inventory Management",
     "slug": "diorama-inventory",
-    "version": "1.2.3",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.diorama.inventory",
-      "versionCode": 12,
+      "versionCode": 13,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -42,7 +42,8 @@
           "cameraPermission": "Allow Inventory Management to use the camera to take photos of dioramas."
         }
       ],
-      "expo-document-picker"
+      "expo-document-picker",
+      "@react-native-google-signin/google-signin"
     ],
     "extra": {
       "eas": {
