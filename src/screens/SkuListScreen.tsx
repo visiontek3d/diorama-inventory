@@ -288,7 +288,7 @@ export default function SkuListScreen({ navigation }: Props) {
 
             return (
               <Pressable
-                style={[styles.row, carryStock && activeTab !== 'one_off' && { borderWidth: 2, borderColor: carryStockColor }]}
+                style={[styles.row, carryStock && activeTab !== 'one_off' && { borderLeftWidth: 3, borderLeftColor: carryStockColor }]}
                 onPress={() => navigation.navigate('SkuDetail', { sku: item.sku })}
               >
                 {item.photo_url ? (
