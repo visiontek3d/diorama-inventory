@@ -17,8 +17,8 @@ import { useAppTheme } from '../lib/theme';
 
 const WEB_CLIENT_ID = '173807542780-tjujh515tenagrk4fkkkusktba9n19cg.apps.googleusercontent.com';
 
-// Show Google Sign-In only in standalone (sideloaded APK), not in Expo Go dev
-const isStandalone = Constants.executionEnvironment === 'standalone';
+// Show Google Sign-In only in sideloaded APK, not in Expo Go dev
+const isStandalone = Constants.executionEnvironment !== 'storeClient';
 
 if (isStandalone) {
   GoogleSignin.configure({ webClientId: WEB_CLIENT_ID });
