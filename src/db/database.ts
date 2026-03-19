@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { supabase } from '../lib/supabase';
 import { Component, Diorama, Lift, LiftColor, Transaction } from '../types';
 
@@ -6,13 +7,18 @@ import { Component, Diorama, Lift, LiftColor, Transaction } from '../types';
 
 async function uploadPhotoIfLocal(uri: string, sku: string): Promise<string> {
   if (uri.startsWith('https://')) return uri;
-  const ext = uri.split('.').pop()?.toLowerCase().split('?')[0] ?? 'jpg';
-  const safeExt = ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? ext : 'jpg';
-  const mimeType = safeExt === 'jpg' ? 'image/jpeg' : `image/${safeExt}`;
-  const fileName = `${sku.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.${safeExt}`;
 
-  // Read file as base64 via expo-file-system (reliable on Android/iOS)
-  const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' as any });
+  // Compress and resize to max 1200px wide, JPEG at 80% quality
+  const compressed = await ImageManipulator.manipulateAsync(
+    uri,
+    [{ resize: { width: 1200 } }],
+    { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+  );
+
+  const fileName = `${sku.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.jpg`;
+
+  // Read compressed file as base64
+  const base64 = await FileSystem.readAsStringAsync(compressed.uri, { encoding: 'base64' as any });
 
   // Decode base64 to Uint8Array for Supabase Storage upload
   const binaryString = atob(base64);
@@ -23,7 +29,7 @@ async function uploadPhotoIfLocal(uri: string, sku: string): Promise<string> {
 
   const { error } = await supabase.storage
     .from('diorama-photos')
-    .upload(fileName, bytes, { contentType: mimeType, upsert: true });
+    .upload(fileName, bytes, { contentType: 'image/jpeg', upsert: true });
   if (error) throw error;
   const { data } = supabase.storage.from('diorama-photos').getPublicUrl(fileName);
   return data.publicUrl;
