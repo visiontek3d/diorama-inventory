@@ -1,13 +1,14 @@
 import React, { useMemo } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '../types';
 import { useAppTheme } from '../lib/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 const LOGO = require('../../assets/logo.png');
+const DIORAMA_CARD = require('../../assets/diorama-card.png');
+const LIFT_CARD = require('../../assets/lift-card.png');
 
 export default function HomeScreen({ navigation }: Props) {
   const C = useAppTheme();
@@ -43,13 +44,19 @@ export default function HomeScreen({ navigation }: Props) {
       borderRadius: 12,
       borderWidth: 1,
       borderColor: C.cardBorder,
-      paddingVertical: 32,
       alignItems: 'center',
+      overflow: 'hidden',
       gap: 8,
+      paddingBottom: 16,
     },
     cardPressed: {
       backgroundColor: C.separator,
       borderColor: C.accent,
+    },
+    cardImage: {
+      width: '100%',
+      aspectRatio: 1,
+      borderRadius: 10,
     },
     cardTitle: {
       fontSize: 18,
@@ -74,7 +81,7 @@ export default function HomeScreen({ navigation }: Props) {
           style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
           onPress={() => navigation.navigate('SkuList')}
         >
-          <Ionicons name="cube-outline" size={40} color={C.accent} />
+          <Image source={DIORAMA_CARD} style={styles.cardImage} resizeMode="cover" />
           <Text style={styles.cardTitle}>Diorama</Text>
         </Pressable>
 
@@ -82,7 +89,7 @@ export default function HomeScreen({ navigation }: Props) {
           style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
           onPress={() => navigation.navigate('LiftList')}
         >
-          <Ionicons name="layers-outline" size={40} color={C.accent} />
+          <Image source={LIFT_CARD} style={styles.cardImage} resizeMode="cover" />
           <Text style={styles.cardTitle}>Lift</Text>
         </Pressable>
       </View>
