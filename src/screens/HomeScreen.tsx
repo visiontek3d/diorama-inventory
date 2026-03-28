@@ -22,8 +22,8 @@ export default function HomeScreen({ navigation }: Props) {
       paddingHorizontal: 24,
     },
     logo: {
-      width: 300,
-      height: 300,
+      width: 360,
+      height: 360,
       marginBottom: -40,
     },
     brand: {
